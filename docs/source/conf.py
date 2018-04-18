@@ -49,7 +49,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'segment'
+project = u'dictlearn'
 copyright = u'2017, Per Magne'
 author = u'Per Magne'
 
@@ -86,7 +86,7 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -103,7 +103,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'segmentdoc'
+htmlhelp_basename = 'dictlearndoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -130,7 +130,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'segment.tex', u'segment Documentation',
+    (master_doc, 'dictlearn.tex', u'dictlearn Documentation',
      u'Per Magne', 'manual'),
 ]
 
@@ -140,7 +140,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'segment', u'segment Documentation',
+    (master_doc, 'dictlearn', u'dictlearn Documentation',
      [author], 1)
 ]
 
@@ -151,8 +151,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'segment', u'segment Documentation',
-     author, 'segment', 'One line description of project.',
+    (master_doc, 'dictlearn', u'dictlearn Documentation',
+     author, 'dictlearn', 'One line description of project.',
      'Miscellaneous'),
 ]
 

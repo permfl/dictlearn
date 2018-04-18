@@ -54,11 +54,181 @@ Finally the image can be written to disk
 
     VTKImage.write_vti('new_path.vti', image, info)
 
+.. py:class:: VTKImage
 
-.. autoclass:: dictlearn.vtk.VTKImage
-    :members:
+    Numpy ndarray wrapper for VTK images. This class holds meta data 
+    about the image such that reading and writing to file will keep 
+    the correct attributes
+        
+    >>> import numpy as np
+    >>> import dictlearn as dl
+    >>> # volume is a numpy array
+    >>> volume = VTKImage.read('path/to/volume.vti')  
+    >>> assert isinstance(volume, np.ndarray)
+    >>> prod = np.dot(volume[:10, :10], np.random.rand(10, 5))
+    >>> assert prod.shape == (10, 5)
+    >>> patches = dl.Patches(volume)
+    >>> patch_generator = patches.create_batch_and_reconstruct(10000):
+    >>> for batch, reconstruct in patch_generator:
+    >>>     # Handle batch
+    >>>     reconstruct(batch)
+        
+    Write 'patches.reconstructed' to disk with the
+    same attributes as 'path/to/volume.vti'
+        
+    >>> volume.write('path/to/volume_new.vti', patches.volume)
 
-.. autoclass:: dictlearn.vtk.VTKInformation
-    :members:
+    .. py:method:: information(self)
 
-.. autofunction:: dictlearn.vtk.vtp_to_vti
+        Get image meta data. See VTKInformation
+
+    .. py:staticmethod:: from_array(array, info=None)
+
+        Create a VTKImage from a numpy array
+
+    .. py:staticmethod:: from_image_data(image_data, name=None)
+
+        Crate VTKImage from vtkImageData
+
+        :param image_data:
+            vtk.vtkImageData instance
+
+        :param name:
+            Name of point array to extract. Defaults to array at 
+            index 0
+
+        :return:
+            VTKImage
+
+    .. py:staticmethod:: read(path, name=None)
+
+        Read a vti image. 
+
+        :param path:
+            Path to file
+
+        :param name:
+            Name or index of array. 
+            If 'name' is None then array at index 0 is returned
+
+        :return:
+            VTKImage instance
+
+    .. py:method:: write(self, path, array=None)
+
+        Write data (array or self) to 'vti' file. This file is written with
+        self.extent, self.origin, self.spacing and self.dtype. 
+        If the instance is created with VTKImage.read() these attributes 
+        are copied from the read file, otherwise the default values are used:
+        
+            * extent = [0, self.dimensions[0] - 1,
+                        0, self.dimensions[1] - 1,
+                        0, self.dimensions[2] - 1]
+
+            * origin = [0, 0, 0]
+            * spacing = [1, 1, 1]
+            * dtype = np.float64
+
+
+        :param path:
+            Filename, where to save
+
+        :param array:
+            Optional, if array is None 'self' is written to file. 
+            If array is not None then array is written to file
+
+        :return:
+            True if writing successful
+
+    .. py:staticmethod:: write_vti(path, array, info=None, extent=None, origin=None, spacing=None, use_array_type=True, name='ImageScalars')
+
+        Write 'array' to 'path' as vti file
+
+        :param path:
+            Where to write
+
+        :param array:
+            Data to write, ndarray with array.ndim == 3
+
+        :param info:
+            Optional instance of VTKInformation, overwrites extent, origin 
+            and spacing.
+
+        :param extent:
+            Data extent, array like, len(extent) == 6. Default [0, array.shape[0] - 1,\
+            0, array.shape[1] - 1, 0, array.shape[2] - 1]
+
+        :param origin:
+            Data origin, default [0, 0, 0]
+
+        :param spacing:
+            Spacing between voxels, default [1, 1, 1]
+
+        :param use_array_type:
+            Only used if info is not None. If this is False the image is 
+            saved with the data type given by info, otherwise
+            array.dtype is used
+
+        :param name:
+            Name of scalar array
+
+        :return:
+            True if write successful
+
+
+    .. py:method:: print(self)
+
+        Print image information
+
+    .. py:method:: copy(self, order='C')
+
+        Return a copy of the image
+
+        :param order: {'C', 'F', 'A', 'K'}, optional
+            Controls the memory layout of the copy. 'C' means C-order,
+            'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+            'C' otherwise. 'K' means match the layout of `a` as closely
+            as possible.
+
+.. py:class:: VTKInformation(path=None, reader=None)
+    
+    Holds image metadata
+
+        * datatype, VTK datatype, int
+        * bounds, bounds of the geometry, size 6
+        * center, center of the geometry, size 3
+        * dimensions, size of the geometry, size 6
+        * extent, six integers - give the index of the first and last
+                  point in each direction
+        * origin, 
+        * spacing, 
+
+    :param path:
+        Path to vtk image
+
+    :param reader:
+        Instance of a vtk image reader
+
+.. function:: vtp_to_vti(surface, information, invalue=1, outvalue=0, flip=None)
+
+    Convert a closed surface to ImageData using
+    vtkPolyDataToImageStencil. All points on or inside
+    the takes 'invalue' while all point outside the
+    surface takes 'outvalue'
+
+    :param surface:
+        Path to surface file
+    :param information:
+        Information about the volume to create. Either an
+        instance of VTKInformation or path to a vti file. If
+        this is a path to an image, its attributes are copied
+        to the converted image
+    :param invalue:
+        Value of points inside or of the surface
+    :param outvalue:
+        Value of points outside the surface.
+    :param flip:
+        Flip around an axis, options: 'x', 'y', 'z' or None to keep
+        as is
+    :return:
+        An instance of VTKImage

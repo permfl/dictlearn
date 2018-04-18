@@ -9,4 +9,5 @@ Preprocessing
     :members:
 
 .. autofunction:: dictlearn.preprocess.center
+
 .. autofunction:: dictlearn.preprocess.normalize
