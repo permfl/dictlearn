@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/permfl/dictlearn.svg?branch=master)](https://travis-ci.org/permfl/dictlearn)
+[![Documentation Status](https://readthedocs.org/projects/dictlearn/badge/?version=latest)](http://dictlearn.readthedocs.io/en/latest/?badge=latest)
 
 ## Install Linux/OSX
 
