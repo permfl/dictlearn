@@ -1,0 +1,12 @@
+[run]
+omit =
+       dictlearn/vmtk_utils.py
+       dictlearn/vtk_image.py
+       dictlearn/wavelet.py
+
+[report]
+exclude_lines =
+    if verbose
+
+    # Python 2/3 tests
+    except NameError
