@@ -1736,7 +1736,7 @@ def main():
 
 
 if __name__ == '__main__':
-    if sys.argv[1].lower().endswith('.yml'):
+    if not sys.argv[1].lower().endswith('.yml'):
         raise SystemExit('Missing config file')
 
     exe = SurfitBase(sys.argv[1])
