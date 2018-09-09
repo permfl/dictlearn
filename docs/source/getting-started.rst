@@ -5,18 +5,17 @@ Getting Started
 
 Overview
 ========
-This is a module for various image processing operations using `dictionary learning`_
-and sparse coding.
+`dictlearn` is a module for signal and image processing. This tool include easy-to-use algorithms for denoising,
+inpainting, feature enhancement and detection, and image segmentation. Additionally, this tool has some methods
+designed specifically for medical image processing, among these are vessel segmentation and denoising of
+large 3D images.
+
+* Multiple algorithms for dictionary learning and sparse coding
+* Accelerated with Cython and C
+* Built on numpy, scipy and scikit-learn
 
 
-Features
---------
-
-* Feature 1
-* Feature 2
-* Feature 3
-* Feature 4
-* Feature 5
+This module is a part of a masters thesis in applied mathematics, which can be read `here`__.
 
 .. _dictionary learning: https://en.wikipedia.org/wiki/Sparse_dictionary_learning
 
@@ -49,8 +48,9 @@ Then install the library with::
 
 Windows
 -------
-Using Anaconda_ is strongly recommended. The `PyWavelet` package in `requirement.txt` are not listed in anaconda package
-repository. Comment out this dependency with `#`, then install dependencies with `conda install`::
+Using Anaconda_ is strongly recommended. The `PyWavelet` package in `requirement.txt` are not listed in
+anaconda package repository.
+Comment out this dependency with `#`, then install dependencies with `conda install`::
 
     $ conda install --file requirements.txt
     $ pip install PyWavelets
@@ -62,7 +62,7 @@ Then install the library with::
 
 
 Cython not compiling on Windows
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Make sure you have the Microsoft C++ compiler. Download the compiler for python 2.7:
  https://www.microsoft.com/en-us/download/details.aspx?id=44266
 For python 3 you need :code:`Build Tools for Visual Studio 2017` :
@@ -70,8 +70,16 @@ For python 3 you need :code:`Build Tools for Visual Studio 2017` :
 
 See here_ if downloading the above compiler doesn't fix the problem.
 
+Next steps
+==========
+.. Make links
+
+See the examples, or the dictionary learning tutorial
+
 
 .. _here: https://github.com/cython/cython/wiki/InstallingOnWindows
+.. _master: https://www.duo.uio.no/bitstream/handle/10852/63309/master-florvaag.pdf
+__ master_
 .. _Anaconda: https://www.continuum.io/
 
 
