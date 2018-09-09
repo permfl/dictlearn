@@ -83,6 +83,7 @@ setup(
     ext_modules=extensions(),
     packages=['dictlearn', 'dictlearn._dictlearn'],
     cmdclass={'build_ext': build_ext_sub},
+    install_requires=open('requirements.txt').read().split(),
     license='MIT',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
