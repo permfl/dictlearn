@@ -1,6 +1,10 @@
 [![Build Status](https://travis-ci.org/permfl/dictlearn.svg?branch=master)](https://travis-ci.org/permfl/dictlearn)
 [![Documentation Status](https://readthedocs.org/projects/dictlearn/badge/?version=latest)](http://dictlearn.readthedocs.io/en/latest/?badge=latest)
 
+## Supported Python Versions
+
+Supported python versions are: 2.7, 3.5 and 3.6. It should also work with python 3.7, however that is not tested 
+
 ## Install Linux/OSX
 
 ```
