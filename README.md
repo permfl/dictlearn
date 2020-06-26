@@ -5,12 +5,43 @@
 
 Supported python versions are: 2.7, 3.5 and 3.6. It should also work with python 3.7, however that is not tested 
 
-## Install Linux/OSX
+## Install Linux
 
 ```
 $ pip install -r requirements.txt
 $ python setup.py install
 ```
+
+## Install Mac
+This package depends in `libomp` which is not installed by default. If you see the following error, `libomp` has to be installed.
+
+```
+$ python setup.py install
+Installing dictlearn...
+running develop
+running egg_info
+writing dictlearn.egg-info/PKG-INFO
+writing dependency_links to dictlearn.egg-info/dependency_links.txt
+writing requirements to dictlearn.egg-info/requires.txt
+writing top-level names to dictlearn.egg-info/top_level.txt
+reading manifest file 'dictlearn.egg-info/SOURCES.txt'
+writing manifest file 'dictlearn.egg-info/SOURCES.txt'
+running build_ext
+building 'dictlearn._dictlearn._dictlearn' extension
+.
+.
+.
+clang: error: unsupported option '-fopenmp'
+error: command 'gcc' failed with exit status 1
+```
+
+Install `libomp` with homebrew:
+```
+$ brew install libomp
+```
+
+and run `python setup.py install` again.
+
 
 ## Install Windows
 Using anaconda:

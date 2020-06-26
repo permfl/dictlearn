@@ -2,6 +2,7 @@ import re
 import os
 import sys
 import numpy
+import platform
 from setuptools import setup
 from distutils.extension import Extension
 from distutils.command.build_ext import build_ext
@@ -48,18 +49,21 @@ COMPILE_ARGS = {
 }
 
 
-LINK_ARGS = {
-    'unix': ['-fopenmp', '-O3']
-}
-
-
 class build_ext_sub(build_ext):
+    def compile_args(self, compiler):
+        if platform.system() == 'Darwin':
+            args = ['-Xpreprocessor', '-fopenmp', '-O3']
+        else:
+            args = COMPILE_ARGS.get(compiler, [])
+
+        return args
+
+
     def build_extensions(self):
         compiler = self.compiler.compiler_type
 
         for ext in self.extensions:
-            ext.extra_compile_args = COMPILE_ARGS.get(compiler, [])
-            ext.extra_link_args = LINK_ARGS.get(compiler, [])
+            ext.extra_compile_args = self.compile_args(compiler)
 
         build_ext.build_extensions(self)
 
