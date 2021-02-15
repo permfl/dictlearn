@@ -7,7 +7,8 @@ from numpy import linalg
 
 # TODO: Drop using these. Write stuff in C
 from sklearn.feature_extraction.image import (
-    extract_patches_2d, reconstruct_from_patches_2d
+    extract_patches_2d,
+    reconstruct_from_patches_2d,
 )
 
 try:
@@ -28,7 +29,7 @@ AVAILABLE_MEMORY = 2  # GB
 
 
 class Patches(object):
-    REMOVE_MEAN = 'remove_mean'
+    REMOVE_MEAN = "remove_mean"
     """
         Generate and reconstruct image patches
 
@@ -56,29 +57,34 @@ class Patches(object):
         :param order:
             C or F for C or FORTRAN order on underlying data
     """
-    def __init__(self, image, size, stride=1, max_patches=None, random=None, order='C'):
+
+    def __init__(self, image, size, stride=1, max_patches=None, random=None, order="C"):
         self.image = image
         self.ndim = self.image.ndim
         self._shape = self.image.shape
         if self.ndim not in [2, 3]:
-            raise ValueError('Image is of unsupported dimensions, {}. Only'
-                             ' 2D or 3D images'.format(self.ndim))
+            raise ValueError(
+                "Image is of unsupported dimensions, {}. Only"
+                " 2D or 3D images".format(self.ndim)
+            )
 
         if isinstance(size, int):
             self._size = size * np.ones(self.ndim, dtype=int)
         elif len(size) == self.ndim:
             self._size = size
         else:
-            raise ValueError('Size has to be int or list/array with '
-                             'len(size) == image.ndim')
+            raise ValueError(
+                "Size has to be int or list/array with " "len(size) == image.ndim"
+            )
 
         if isinstance(stride, int):
             self.stride = stride * np.ones(self.ndim, dtype=int)
         elif len(stride) == self.ndim:
             self.stride = stride
         else:
-            raise ValueError('Stride has to be int or list/array with '
-                             'len(stride) == image.ndim')
+            raise ValueError(
+                "Stride has to be int or list/array with " "len(stride) == image.ndim"
+            )
 
         self.patch_size = reduce(operator.mul, self._size)
         self._patches = None
@@ -91,8 +97,9 @@ class Patches(object):
         if max_patches is not None:
             self.max_patches = max_patches
             if self.n_patches < self.max_patches:
-                raise ValueError('Cannot extract more than all patches. '
-                                 ' n_patches < max_patches')
+                raise ValueError(
+                    "Cannot extract more than all patches. " " n_patches < max_patches"
+                )
         else:
             self.max_patches = max_patches
 
@@ -171,11 +178,12 @@ class Patches(object):
             Reconstructed image
         """
         if self.random is not None or self.max_patches is not None:
-            raise ValueError('Cannot reconstruct when random or '
-                             'max_patches is not None')
+            raise ValueError(
+                "Cannot reconstruct when random or " "max_patches is not None"
+            )
 
-        if self.order != 'C':
-            raise ValueError('Can only reconstruct C ordered patches')
+        if self.order != "C":
+            raise ValueError("Can only reconstruct C ordered patches")
 
         new_patches += self._mean
 
@@ -197,7 +205,7 @@ class Patches(object):
 
         return reconstructed_image
 
-    def generator(self, batch_size, callback=False):
+    def generator(self, batch_size, callback=False, flatten=True):
         """
 
         Create and reconstruct a batch iteratively.
@@ -254,10 +262,10 @@ class Patches(object):
             self.check_batch_size_or_raise(batch_size)
             self.reconstructed = np.zeros_like(self.image)
             self.weights = np.zeros_like(self.image)
-            return self._next_batch_3d(batch_size, True)
+            return self._next_batch_3d(batch_size, reconstruct=True, flatten=flatten)
         else:
             self.check_batch_size_or_raise(batch_size)
-            return self._next_batch_3d(batch_size)
+            return self._next_batch_3d(batch_size, flatten=flatten)
 
     def remove_mean(self, add_back=True):
         """
@@ -268,7 +276,7 @@ class Patches(object):
                 Automatically add back the mean to patches on reconstruction
         """
         if self._patches is None:
-            self.ops.append((Patches.REMOVE_MEAN, (add_back, )))
+            self.ops.append((Patches.REMOVE_MEAN, (add_back,)))
             return
 
         self._patches, self._mean = center(self._patches, retmean=True)
@@ -276,7 +284,7 @@ class Patches(object):
         if not add_back:
             self._mean = 0
 
-    def _next_batch_3d(self, batch_size, reconstruct=False):
+    def _next_batch_3d(self, batch_size, reconstruct=False, flatten=True):
         """
             Creates 3d patches iteratively, keep only batch_size
             patches in memory
@@ -284,10 +292,13 @@ class Patches(object):
         sx, sy, sz = self._size
         x, y, z = self._shape
 
-        # Keep batches transposed st. write to row not column.
-        # Fewer cache misses -> 50% faster
-        batch = np.zeros((batch_size, self.patch_size),
-                         dtype=self.image.dtype)
+        if flatten:
+            # Keep batches transposed st. write to row not column.
+            # Fewer cache misses -> 50% faster
+            batch = np.zeros((batch_size, self.patch_size), dtype=self.image.dtype)
+        else:
+            batch = np.zeros((batch_size, sx, sy, sz), dtype=self.image.dtype)
+
         indices = []
         # todo cython
         s = 0
@@ -295,8 +306,13 @@ class Patches(object):
         for i in range(0, x - sx + 1, self.stride[0]):
             for j in range(0, y - sy + 1, self.stride[1]):
                 for k in range(0, z - sz + 1, self.stride[2]):
-                    a = self.image[i:i + sx, j:j + sy, k:k + sz].flatten()
-                    batch[s] = a
+                    a = self.image[i : i + sx, j : j + sy, k : k + sz]
+
+                    if flatten:
+                        batch[s] = a.flatten()
+                    else:
+                        batch[s] = a
+
                     s += 1
 
                     if reconstruct:
@@ -305,51 +321,98 @@ class Patches(object):
 
                     if s == batch_size:
                         if len(self.ops) > 0:
+                            assert flatten, "Not supported when flatten==False"
                             self._patches = batch.T
                             self._do_ops(clear=False)
                             batch, self._patches = self._patches.T, None
 
                         if reconstruct:
-                            yield batch.T, partial(self._receive, indices)
+                            callback = partial(self._receive, indices, flatten)
+
+                            if flatten:
+                                yield batch.T, callback
+                            else:
+                                yield batch, callback
                         else:
-                            yield batch.T
+                            if flatten:
+                                yield batch.T
+                            else:
+                                yield batch
 
                         s = 0
                         indices = []
 
         if len(self.ops) > 0:
+            assert flatten, "Not supported when flatten==False"
             self._patches = batch[:s].T
             self._do_ops(clear=False)
             batch[:s], self._patches = self._patches.T, None
 
         if reconstruct:
-            yield batch[:s].T, partial(self._receive, indices[:s])
+            callback = partial(self._receive, indices[:s], flatten)
+
+            if s > 0:
+                if flatten:
+                    yield batch[:s].T, callback
+                else:
+                    yield batch[:s], callback
+
             idx = self.weights > 0
             self.reconstructed[idx] /= self.weights[idx]
         else:
-            yield batch[:s].T
+            if s > 0:
+                if flatten:
+                    yield batch[:s].T
+                else:
+                    yield batch[:s]
 
-    def _receive(self, indices, batch):
+    def _receive(self, indices, flatten, batch):
         """
 
         :param indices:
             Indices of each patch,  (global_patch_number, (start axis0, end axis0), ...)
+        
+        :paren flatten:
+            True if the patch is flattened into a 1d vector and need to be reshaped
+            such that batch[i].shape == self.size
 
         :param batch:
             Reconstruct this batch, and put back in image on location specified
             by indices
         """
-        # todo cython
-        if self.reconstructed.dtype.kind == 'f' and \
-                self.reconstructed.dtype != batch.dtype:
+        if flatten:
+            self._receive_flattened(indices, batch)
+        else:
+            self._receive_true_shape(indices, batch)
+
+    def _receive_flattened(self, indices, batch):
+        if (
+            self.reconstructed.dtype.kind == "f"
+            and self.reconstructed.dtype != batch.dtype
+        ):
             batch = batch.astype(self.reconstructed.dtype)
         batch += self._mean
         for i, tup in enumerate(indices):
             a, x, y, z = tup
             # i, j, k = self._expand_index(a)
-            self.reconstructed[x[0]:x[1], y[0]:y[1], z[0]:z[1]] += \
-                batch[:, i].reshape(self.size[0], self.size[1], self.size[2])
-            self.weights[x[0]:x[1], y[0]:y[1], z[0]:z[1]] += 1
+            self.reconstructed[x[0] : x[1], y[0] : y[1], z[0] : z[1]] += batch[
+                :, i
+            ].reshape(self.size[0], self.size[1], self.size[2])
+            self.weights[x[0] : x[1], y[0] : y[1], z[0] : z[1]] += 1
+
+    def _receive_true_shape(self, indices, batch):
+        if (
+            self.reconstructed.dtype.kind == "f"
+            and self.reconstructed.dtype != batch.dtype
+        ):
+            batch = batch.astype(self.reconstructed.dtype)
+
+        batch += self._mean
+
+        for i, tup in enumerate(indices):
+            a, x, y, z = tup
+            self.reconstructed[x[0] : x[1], y[0] : y[1], z[0] : z[1]] += batch[i]
+            self.weights[x[0] : x[1], y[0] : y[1], z[0] : z[1]] += 1
 
     def _construct(self):
         """
@@ -360,19 +423,20 @@ class Patches(object):
 
         if self.ndim == 2:
             patches = extract_patches_2d(
-                image=self.image, patch_size=self._size,
-                max_patches=self.max_patches, random_state=self.random
+                image=self.image,
+                patch_size=self._size,
+                max_patches=self.max_patches,
+                random_state=self.random,
             )
             self._raw_patches_shape = patches.shape
-            self._patches = patches.reshape(patches.shape[0], -1,
-                                            order=self.order).T
+            self._patches = patches.reshape(patches.shape[0], -1, order=self.order).T
         elif self.ndim == 3:
             if self.rgb:
                 raise NotImplementedError()
             else:
                 self._construct_3d()
         else:
-            raise ValueError('Only 2D or 3D Images')
+            raise ValueError("Only 2D or 3D Images")
 
     def _construct_3d(self):
         """
@@ -382,14 +446,16 @@ class Patches(object):
         size = self._size
         stride = self.stride
         n_patches = self._check_size(False)
-        self._patches = np.zeros((n_patches, size[0] * size[1] * size[2]),
-                                 dtype=self.image.dtype)
+        self._patches = np.zeros(
+            (n_patches, size[0] * size[1] * size[2]), dtype=self.image.dtype
+        )
         s = 0
         for i in range(0, x - size[0] + 1, stride[0]):
             for j in range(0, y - size[1] + 1, stride[1]):
                 for k in range(0, z - size[2] + 1, stride[2]):
-                    a = self.image[i:i + size[0], j:j + size[1],
-                        k:k + size[2]].flatten()
+                    a = self.image[
+                        i : i + size[0], j : j + size[1], k : k + size[2]
+                    ].flatten()
                     self._patches[s] = a
                     s += 1
 
@@ -409,9 +475,11 @@ class Patches(object):
         x, y, z = volume.shape
 
         if np.any(stride > size):
-            raise ValueError('Cannot reconstruct volume when stride is larger '
-                             'than patch size. Need np.all(stride <= size), '
-                             'size={}, stride={}'.format(size, stride))
+            raise ValueError(
+                "Cannot reconstruct volume when stride is larger "
+                "than patch size. Need np.all(stride <= size), "
+                "size={}, stride={}".format(size, stride)
+            )
 
         s = 0
         patches = new_patches.T
@@ -419,8 +487,8 @@ class Patches(object):
             for j in range(0, y - size[1] + 1, stride[1]):
                 for k in range(0, z - size[2] + 1, stride[2]):
                     a = patches[s].reshape(size[0], size[1], size[2])
-                    volume[i:i + size[0], j:j + size[1], k:k + size[2]] += a
-                    weights[i:i + size[0], j:j + size[1], k:k + size[2]] += 1
+                    volume[i : i + size[0], j : j + size[1], k : k + size[2]] += a
+                    weights[i : i + size[0], j : j + size[1], k : k + size[2]] += 1
                     s += 1
 
         idx = weights != 0
@@ -456,8 +524,8 @@ class Patches(object):
         memory_req_gb = n_patches * self.patch_size * dtype_size * 1e-9
 
         if memory_req_gb > AVAILABLE_MEMORY and throw:
-            msg = 'Not enough memory for patches, need {} GB.'
-            msg += ' Use Patches.generator(batch_size)'
+            msg = "Not enough memory for patches, need {} GB."
+            msg += " Use Patches.generator(batch_size)"
             raise MemoryError(msg.format(memory_req_gb))
 
         if retdims:
@@ -473,8 +541,8 @@ class Patches(object):
         memory = (batch_size * self.patch_size) * self.image.dtype.itemsize * 1e-9
 
         if memory > AVAILABLE_MEMORY:
-            msg = 'Not enough memory for batches, need {} GB.'
-            msg += ' Try smaller batch_size'
+            msg = "Not enough memory for batches, need {} GB."
+            msg += " Try smaller batch_size"
             raise MemoryError(msg.format(memory))
 
     def _expand_index(self, num):
@@ -487,8 +555,9 @@ class Patches(object):
             num_y = self._shape[1] - self._size[1] + 1
             k = self.stride[2] * num % num_z
             j = self.stride[1] * (self.stride[2] * num // num_z) % num_y
-            i = self.stride[0] * (num // (num_z * num_y //
-                                          (self.stride[2] * self.stride[1])))
+            i = self.stride[0] * (
+                num // (num_z * num_y // (self.stride[2] * self.stride[1]))
+            )
             return i, j, k
         else:
             raise NotImplementedError()
@@ -531,11 +600,14 @@ class Patches3D(Patches):
             Stride between each patch, (i, j, k). 'volume' cannot be reconstructed
             if i > x, j > y or k > z
     """
+
     def __init__(self, volume, size, stride):
         super(Patches3D, self).__init__(volume, size, stride)
         import warnings
-        warnings.warn('Patches3D deprecated, use Patches',
-                      utils.VisibleDeprecationWarning)
+
+        warnings.warn(
+            "Patches3D deprecated, use Patches", utils.VisibleDeprecationWarning
+        )
 
     def next_batch(self, batch_size):
         """
@@ -634,5 +706,4 @@ def normalize(patches, lim=0.2):
         patches[:, i] = p / max(linalg.norm(p), lim)
 
     return patches
-
 
